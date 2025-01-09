@@ -20,20 +20,22 @@ class ContactController extends Controller
        return view('contacts.create', compact('customer'));
     }
 
-    public function store(Request $request, Customer $customer)
+    public function store(Request $request)
     {
-       $request->validate([
+        $request->validate([
             'name' => 'required',
-            'email' => 'required|email|unique:contacts',
-           'phone' => 'nullable',
-            'job_title' => 'nullable'
+            'email' => 'required|email|unique:customers',
+            'phone' => 'nullable',
+            'address' => 'nullable'
         ]);
-         $customer->contacts()->create($request->all());
-
-        return redirect()->route('customers.show', $customer)
-           ->with('success', 'Contact created successfully.');
+         try {
+             Customer::create($request->all());
+              return redirect()->route('customers.index')
+                 ->with('success', 'Customer created successfully.');
+          } catch (\Illuminate\Validation\ValidationException $e) {
+               return redirect()->back()->withErrors($e->errors())->withInput();
+          }
     }
-
     public function edit(Customer $customer, Contact $contact)
     {
       return view('contacts.edit', compact('contact', 'customer'));

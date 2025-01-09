@@ -7,9 +7,33 @@ use Illuminate\Http\Request;
 
 class CustomerController extends Controller
 {
-    public function index()
+    // public function index(Request $request)
+    // {
+    //     $search = $request->input('search');
+    //     $customers = Customer::query()
+    //        ->when($search, function ($query) use ($search) {
+    //          return $query->where('name', 'like', '%' . $search . '%');
+    //        })
+    //        ->paginate(10);
+
+    //     return view('customers.index', compact('customers'));
+    // }
+
+    public function index(Request $request)
     {
-        $customers = Customer::all();
+        $search = $request->input('search');
+        $filter = $request->input('filter');
+
+        $customers = Customer::query()
+            ->when($search, function ($query) use ($search) {
+                return $query->where('name', 'like', '%' . $search . '%');
+            })
+            ->when($filter, function ($query) use ($filter) {
+                return $query->orderBy('name', $filter);
+            })
+           ->paginate(10);
+
+
         return view('customers.index', compact('customers'));
     }
 
@@ -26,10 +50,13 @@ class CustomerController extends Controller
             'phone' => 'nullable',
             'address' => 'nullable'
         ]);
-        Customer::create($request->all());
-
-        return redirect()->route('customers.index')
-            ->with('success', 'Customer created successfully.');
+         try {
+             Customer::create($request->all());
+              return redirect()->route('customers.index')
+                 ->with('success', 'Customer created successfully.');
+          } catch (\Illuminate\Validation\ValidationException $e) {
+               return redirect()->back()->withErrors($e->errors())->withInput();
+          }
     }
 
     public function show(Customer $customer) {

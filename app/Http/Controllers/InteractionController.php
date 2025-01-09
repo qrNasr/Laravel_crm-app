@@ -21,19 +21,22 @@
              return view('interactions.create', compact('customer'));
         }
 
-        public function store(Request $request, Customer $customer)
+        public function store(Request $request)
         {
-           $request->validate([
-               'type' => 'required',
-                'notes' => 'nullable',
-                'interaction_date' => 'required|date'
-           ]);
-           $customer->interactions()->create($request->all());
-
-            return redirect()->route('customers.show', $customer)
-               ->with('success', 'Interaction created successfully.');
+            $request->validate([
+                'name' => 'required',
+                'email' => 'required|email|unique:customers',
+                'phone' => 'nullable',
+                'address' => 'nullable'
+            ]);
+             try {
+                 Customer::create($request->all());
+                  return redirect()->route('customers.index')
+                     ->with('success', 'Customer created successfully.');
+              } catch (\Illuminate\Validation\ValidationException $e) {
+                   return redirect()->back()->withErrors($e->errors())->withInput();
+              }
         }
-
 
         public function edit(Customer $customer, Interaction $interaction)
         {
